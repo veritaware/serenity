@@ -609,7 +609,7 @@
  namespace {
  
  // The result of checking whether a request to a URL should have variations
-@@ -124,16 +120,7 @@ URLValidationResult GetUrlValidationResu
+@@ -124,16 +120,7 @@
  // rather than `headers`, to be exempted from CORS checks, and to avoid exposing
  // the header to service workers.
  bool ShouldAppendVariationsHeader(const GURL& url, InIncognito incognito) {
@@ -627,7 +627,7 @@
  }
  
  // Returns non-empty `std::string` if `variations_headers` has a header value
-@@ -141,19 +128,7 @@ bool ShouldAppendVariationsHeader(const
+@@ -141,19 +128,7 @@
  std::optional<std::string> GetHeaderValue(
      const variations::mojom::VariationsHeaders* variations_headers,
      bool is_first_party_context) {
@@ -647,7 +647,7 @@
  }
  
  // Returns true if the request is sent from a Google web property, i.e. from a
-@@ -289,15 +264,6 @@ bool AppendVariationsHeader(const GURL&
+@@ -289,15 +264,6 @@
                              InIncognito incognito,
                              SignedIn signed_in,
                              network::ResourceRequest* request) {
@@ -663,7 +663,21 @@
    return false;
  }
  
-@@ -321,14 +287,6 @@ bool AppendVariationsHeaderWithCustomVal
+@@ -305,13 +271,6 @@
+                             InIncognito incognito,
+                             SignedIn signed_in,
+                             net::URLRequest* request) {
+-  if (auto header = GetVariationsHeaderValueToAppend(
+-          url, incognito, signed_in, IsFirstPartyContext(request))) {
+-    if (!request->extra_request_headers().HasHeader(kClientDataHeader)) {
+-      request->SetExtraRequestHeaderByName(kClientDataHeader, *header, true);
+-    }
+-    return true;
+-  }
+   return false;
+ }
+ 
+@@ -321,14 +280,6 @@
      const variations::mojom::VariationsHeaders* variations_headers,
      Owner owner,
      network::ResourceRequest* request) {
@@ -678,7 +692,24 @@
    return false;
  }
  
-@@ -361,9 +319,6 @@ void RemoveVariationsHeaderIfNeeded(
+@@ -337,16 +288,6 @@
+     InIncognito incognito,
+     const variations::mojom::VariationsHeaders* variations_headers,
+     net::URLRequest* request) {
+-  if (variations_headers && ShouldAppendVariationsHeader(url, incognito)) {
+-    if (std::optional<std::string> header_value =
+-            GetHeaderValue(variations_headers, IsFirstPartyContext(request))) {
+-      if (!request->extra_request_headers().HasHeader(kClientDataHeader)) {
+-        request->SetExtraRequestHeaderByName(kClientDataHeader, *header_value,
+-                                             true);
+-      }
+-      return true;
+-    }
+-  }
+   return false;
+ }
+ 
+@@ -361,9 +302,6 @@
      const network::mojom::URLResponseHead& response_head,
      InIncognito incognito,
      std::vector<std::string>* to_be_removed_headers) {
@@ -688,7 +719,7 @@
  }
  
  std::unique_ptr<network::SimpleURLLoader>
-@@ -400,28 +355,21 @@ CreateSimpleURLLoaderWithVariationsHeade
+@@ -400,28 +338,21 @@
  }
  
  bool HasVariationsHeader(const network::ResourceRequest& request) {
@@ -719,6 +750,7 @@
 -  params->cors_exempt_header_list.push_back(kClientDataHeader);
  }
  
+ }  // namespace variations
  }  // namespace variations
 --- a/content/browser/preloading/prefetch/prefetch_resource_request_utils.cc
 +++ b/content/browser/preloading/prefetch/prefetch_resource_request_utils.cc
